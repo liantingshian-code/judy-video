@@ -1,0 +1,15 @@
+{
+  "name": "追劇雷達 · 韓劇／陸劇片段雷達",
+  "short_name": "追劇雷達",
+  "description": "一頁串聯 Threads、抖音、Instagram 的韓劇／陸劇片段搜尋，省下滑手機的時間。",
+  "lang": "zh-Hant",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111114",
+  "theme_color": "#111114",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

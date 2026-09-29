@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>追劇雷達 · 打劇名找片段</title>
+<meta name="description" content="打一個劇名，自動串聯 Threads、抖音、Instagram、YouTube 的片段搜尋連結。">
+<meta name="theme-color" content="#121317">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<style>
+:root{--bg:#f7f7f8;--card:#fff;--ink:#16181d;--body:#4a4d55;--mute:#8a8d95;--line:#e6e6e8;--acc:#e1306c;--ok:#0f7a5a;--ch:#18181b;--th:#e1306c;--dy:#fe2c55;--ig:#c32aa3;--yt:#ff0033;--shadow:0 1px 3px rgba(0,0,0,.06)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111114;--card:#1a1a1f;--ink:#eef0f4;--body:#c3c6ce;--mute:#8b8f9a;--line:#2b2c33;--yt:#ff4d67;--shadow:0 1px 3px rgba(0,0,0,.4)}}
+[data-theme="dark"]{--bg:#111114;--card:#1a1a1f;--ink:#eef0f4;--body:#c3c6ce;--mute:#8b8f9a;--line:#2b2c33;--yt:#ff4d67;--shadow:0 1px 3px rgba(0,0,0,.4)}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang TC","Noto Sans TC",sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+main{max-width:960px;margin:auto;padding:20px 14px 56px}
+.eyebrow{color:var(--acc);font-weight:800;letter-spacing:.14em;font-size:12px}
+h1{margin:.1em 0 .2em;font-size:27px;letter-spacing:-.01em}
+h2{font-size:16px;margin:0 0 8px;display:flex;align-items:center;gap:7px}
+h2 .n{font-size:12px;font-weight:800;color:var(--bg);background:var(--mute);border-radius:999px;padding:1px 8px}
+.sub{color:var(--body);margin:0 0 16px;font-size:14px}
+.sub b{color:var(--ink)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:15px;margin-bottom:13px;box-shadow:var(--shadow)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row.tight{gap:6px}
+.grow{flex:1;min-width:0}
+label.fld{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:800;color:var(--mute);letter-spacing:.04em}
+input[type=text],select{font:inherit;width:100%;background:var(--bg);color:var(--ink);border:1.5px solid var(--line);border-radius:11px;padding:10px 11px;outline:0}
+input[type=text]:focus{border-color:var(--acc)}
+button,.btn{font:inherit;font-weight:700;cursor:pointer;border:1.5px solid transparent;border-radius:999px;padding:9px 16px;background:var(--ink);color:var(--bg);display:inline-flex;align-items:center;gap:6px;text-decoration:none;line-height:1.3}
+button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+button:disabled{opacity:.45;cursor:default}
+button.sm{padding:5px 11px;font-size:13px}
+.mute{color:var(--mute);font-size:13px}
+.seg{display:inline-flex;background:var(--bg);border:1.5px solid var(--line);border-radius:999px;padding:3px;gap:2px;flex:none}
+.seg button{border:0;background:transparent;color:var(--body);padding:6px 15px;border-radius:999px;font-size:14px}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg);font-weight:800}
+.chip{font-size:13px;font-weight:700;padding:7px 13px;min-height:34px;border-radius:999px;border:1.5px solid var(--line);background:transparent;color:var(--body);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:#fff}
+#wrap{position:relative}
+#sug{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 4px);background:var(--card);border:1px solid var(--line);border-radius:13px;box-shadow:0 8px 28px rgba(0,0,0,.16);overflow:hidden;max-height:280px;overflow-y:auto}
+#sug[hidden]{display:none}
+#sug button{display:flex;width:100%;border:0;border-radius:0;background:transparent;color:var(--ink);padding:9px 12px;font-weight:500;font-size:14px;justify-content:flex-start;gap:8px;align-items:baseline;flex-wrap:nowrap;text-align:left}
+#sug button:hover,#sug button.on{background:var(--bg)}
+#sug .nm{font-weight:800;white-space:nowrap}
+#sug .en{color:var(--mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sug .yy{margin-left:auto;color:var(--mute);font-size:11px;flex:none}
+.hit{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;background:color-mix(in srgb,var(--card) 88%,var(--ok) 12%);border:1px solid color-mix(in srgb,var(--line) 60%,var(--ok));border-radius:12px;padding:10px 12px;margin-top:10px;font-size:13px}
+.hit .t{font-weight:900}
+.hit .k{color:var(--body)}
+.hit .k b{color:var(--ink)}
+.tag{font-size:11.5px;font-weight:800;border:1px solid var(--line);border-radius:999px;padding:1px 9px;color:var(--body);white-space:nowrap}
+#qprev{font-size:12.5px;color:var(--body);margin-top:9px;word-break:break-word}
+#qprev b{color:var(--ink)}
+.src{border:1.5px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px;background:var(--bg)}
+.src:last-child{margin-bottom:0}
+.src h3{margin:0 0 2px;font-size:15px;display:flex;align-items:center;gap:7px}
+.dot{width:9px;height:9px;border-radius:50%;flex:none}
+.src .btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:7px;margin-top:9px}
+.src .btns a{font-size:13.5px;font-weight:700;padding:9px 12px;border-radius:11px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;display:flex;align-items:center;justify-content:space-between;gap:6px;transition:.12s}
+.src .btns a:hover{border-color:currentColor;transform:translateY(-1px)}
+.src .btns a .ar{opacity:.45;font-size:11px}
+.rel{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:9px;margin-top:4px}
+.rel a{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;text-decoration:none;color:inherit;display:block;background:var(--bg)}
+.rel a:hover{border-color:var(--acc)}
+.rel .t{font-weight:800;font-size:14.5px}
+.rel .e{color:var(--mute);font-size:12px;margin-top:1px}
+    .rel .w{color:var(--body);font-size:12px;margin-top:5px}
+    .wik{display:flex;flex-wrap:wrap;gap:7px}
+    .wik button{font-size:12.5px;font-weight:600;padding:7px 12px;min-height:34px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);color:var(--body);cursor:pointer;text-align:left}
+    .wik button:hover{border-color:var(--acc)}
+    .wik button b{color:var(--ink)}
+    .wik button i{color:var(--mute);font-style:normal;font-weight:400}
+    .wik button.on{background:var(--acc);border-color:var(--acc)}
+    .wik button.on b,.wik button.on i{color:#fff}
+    .wikNote{font-size:12.5px;margin-top:9px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+    .wikNote a{color:var(--acc);font-weight:600}
+.recent{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.recent .r{display:inline-flex;align-items:center;gap:5px;font-size:13px;font-weight:700;padding:4px 6px 4px 12px;border-radius:999px;border:1.5px solid var(--line);background:var(--bg);color:var(--body);cursor:pointer}
+.recent .r:hover{border-color:var(--acc);color:var(--ink)}
+.recent .r b{font-weight:800}
+.recent .r i{font-style:normal;opacity:.5;font-size:14px;line-height:1;padding:2px 3px;border-radius:50%}
+.recent .r i:hover{background:var(--acc);color:#fff;opacity:1}
+.empty{border:1.5px dashed var(--line);border-radius:12px;padding:22px 14px;text-align:center;color:var(--mute);font-size:14px}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 20px;border-radius:999px;font-weight:700;font-size:14px;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+#toast.on{opacity:1;transform:translateX(-50%)}
+footer{margin-top:18px;font-size:12.5px;color:var(--mute);line-height:1.8}
+kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:1px 5px;background:var(--card)}
+@media (max-width:560px){h1{font-size:23px}main{padding:14px 11px 46px}.card{padding:13px}.src .btns{grid-template-columns:1fr 1fr}.src .btns a{padding:8px 10px;font-size:13px}}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">社群片段雷達 · 2026-09-29</div>
+  <h1>追劇雷達</h1>
+  <p class="sub">打一個劇名 → <b>Threads、抖音、Instagram、YouTube 的片段搜尋連結一次給你</b>，關鍵字、英文名、韓文名都自動接好，一鍵點開就能看最新片段。不存任何東西、不用登入、不會被封號。</p>
+
+  <div class="card">
+    <h2>打劇名</h2>
+    <div class="row" style="margin-top:10px;align-items:flex-end">
+      <div class="grow" id="wrap">
+        <label class="fld">劇名<input type="text" id="title" placeholder="例：淚之女王（中文、英文、韓文都可以打）" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+        <div id="sug" hidden></div>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:9px;align-items:flex-end">
+      <div class="grow"><label class="fld">英文／韓文名（選填；字典裡有的會自動幫你填）<input type="text" id="alias" placeholder="Queen of Tears" autocomplete="off" spellcheck="false"></label></div>
+      <button class="ghost sm" id="themeBtn" title="切換深淺色">◐</button>
+    </div>
+
+    <div class="row tight" style="margin-top:11px" id="chips"></div>
+    <div class="row" style="margin-top:9px">
+      <label class="chip" id="safeChip" aria-pressed="false" title="自動加上「無劇透」關鍵字">🛡 無劇透</label>
+      <span class="mute">以上會即時接進搜尋關鍵字</span>
+    </div>
+
+    <div id="hitBox"></div>
+    <div id="qprev"></div>
+
+    <div class="row" style="margin-top:11px">
+      <button id="openAll">⚡ 一鍵開齊四個來源</button>
+      <button class="ghost sm" id="copyQ">複製關鍵字</button>
+    </div>
+    <div class="note mute" id="allNote" hidden style="margin-top:9px">瀏覽器問「是否允許開啟多個分頁」→ 選<b>允許</b>。不想一次開就個別點。</div>
+  </div>
+
+  <div class="card" id="recentCard">
+    <h2>最近搜過 <span class="n" id="recentN">0</span></h2>
+    <div class="recent" id="recent" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card" id="wikCard" hidden>
+    <h2>維基百科 <span class="mute" id="wikWho" style="font-weight:400"></span></h2>
+    <div id="wikBox" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card" id="srcCard" hidden>
+    <h2>推薦連結 <span class="mute" id="srcWho" style="font-weight:400"></span></h2>
+    <div id="sources" style="margin-top:8px"></div>
+  </div>
+
+  <div class="card" id="relCard" hidden>
+    <h2>你可能也想看 <span class="mute" style="font-weight:400">（依類型、平台、年份挑的）</span></h2>
+    <div class="rel" id="rel" style="margin-top:8px"></div>
+  </div>
+
+  <footer>
+    <div>快捷鍵：<kbd>↓</kbd><kbd>↑</kbd> 選建議　<kbd>Enter</kbd> 產生連結　<kbd>Esc</kbd> 關掉建議</div>
+    <div>只記住「最近搜過」（最多 8 筆）存在你自己的瀏覽器裡，沒有帳號、不上傳任何東西。</div>
+    <div style="margin-top:6px">說明：Threads、抖音、Instagram 都<b>不提供</b>公開的貼文搜尋 API，所以這裡的作法是「一鍵把關鍵字帶到各平台真正的搜尋結果頁」——點出去仍需你自己登入。YouTube 那組是拿來看官方預告與剪輯片段的。</div>
+  </footer>
+</main>
+
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const e = encodeURIComponent;
+const LS = 'dramaRadar.v2';
+const MAXREC = 8;
+
+// ── 劇名字典：中名 / 英文名 / 韓文名 / 類型 / 年份 / 片源 ──
+// 英文名留空 = 該平台沒通用的英文片名，工具會自動略過對應的按鈕
+const RAW_KR = [
+  // 2026 韓劇
+  ['21世紀大君夫人','','','愛情|財閥','2026','MBC'],
+  ['鬼謎東宮','The East Palace','동궁','古裝|奇幻|懸疑','2026','Netflix'],
+  ['毛骨悚然的戀愛','Spooky in Love','소름 돋는 사랑','愛情|奇幻|喜劇','2026','Netflix'],
+  ['公寓黑風暴','The Apartment Job','APT. 404','犯罪|喜劇','2026','Netflix'],
+  ['我的王室死對頭','My Royal Nemesis','내 왕국 남주','古裝|愛情|喜劇','2026','JTBC'],
+  ['醜聞','The Scandal','소문','古裝|愛情|宮鬥','2026','Netflix'],
+  ['韓國製造','Made in Korea','메이드 인 코리아','職場|創業','2026','Netflix'],
+  ['四手聯彈','Four Hands, Two Sonatas','핸즈투게','校園|青春|音樂','2026','Netflix'],
+  ['100日的謊言','100 Days of Deception','100일의 거짓말','諜戰|時代|愛情','2026',''],
+  ['崩潰季節2','Crash Season 2','크래시 시즌2','職場|災難|動作','2026','Disney+'],
+  ['普通人的彩票','The Ordinary Jackpot','','職場|喜劇|生活','2026',''],
+  ['法官李漢英','Judge Lee Han-young','판사 이한영','古裝|法律|爽劇','2026','MBC'],
+  ['愛情處方箋','The Love Prescription','','諜戰|愛情|醫療','2026','KBS'],
+  ['大王文武','The Great King','','歷史|戰爭|權謀','2026','KBS'],
+  ['潛水 dive','Dive into You','너에게 다이브','愛情|喜劇|奇幻','2026','Channel A'],
+  ['Doctor X 白色黑手黨時代','Doctor X','','醫療|犯罪|懸疑','2026','SBS'],
+  ['魅惑','Mesmerizing','','時代|愛情|奇幻','2026','Disney+'],
+  ['Nine to Six','','','職場|愛情','2026','SBS'],
+  // 經典韓劇（片段至今還在流傳）
+  ['淚之女王','Queen of Tears','왕의 눈물','愛情|職場|喜劇','2024','Netflix'],
+  ['愛的迫降','Crash Landing on You','사랑의 낙차','愛情|喜劇|戰爭','2019','tvN'],
+  ['鬼怪','Goblin','도깨비','愛情|奇幻|古裝','2016','tvN'],
+  ['太陽的後裔','Descendants of the Sun','태양의 후손','愛情|軍事|醫療','2016','KBS'],
+  ['梨泰院Class','Itaewon Class','이태원 클라쓰','劇情|創業|復仇','2020','JTBC'],
+  ['黑暗榮耀','The Glory','더 글로리','復仇|學院|懸疑','2023','Netflix'],
+  ['二十五二十一','Twenty-Five Twenty-One','스물다섯 스물하나','青春|成長|愛情','2022','tvN'],
+  ['天空之城','Sky Castle','하늘의 성','家庭|懸疑|教育','2019','tvN'],
+  ['信號','Signal','시그널','懸疑|犯罪|時間','2016','tvN'],
+  ['秘密森林','Secret Forest','비밀의 숲','懸疑|犯罪|律師','2016','tvN'],
+  ['機智的醫生生活','Hospital Playlist','슬기로운 의사생활','職場|友情|醫療','2020','tvN'],
+  ['愛樂園','It’s Okay to Not Be Okay','이건 괜찮아','心理|愛情|家庭','2020','tvN'],
+  ['衣袖紅顏','The King’s Affection','남주의 측집안','古裝|愛情|宮鬥','2021','tvN'],
+  ['女神降臨','The Judge from Hell','지옥에서 온 판관','愛情|奇幻|法庭','2021','tvN'],
+  ['覆活','Revenant','부활','懸疑|醫療|復仇','2023','SBS'],
+  ['咖啡王子1號店','The Coffee Prince','커피왕자','愛情|喜劇|職場','2007','MBC'],
+  ['來自星星的你','My Love from the Star','별에서 온 그대','愛情|奇幻|失憶','2013','SBS'],
+  ['白色巨塔','The White Tower','백탑','醫療|職場|權謀','2006','MBC']
+];
+const RAW_CN = [
+  ['逐玉','Pursuit of Jade','','古裝|權謀|愛情','2026','騰訊'],
+  ['野狗骨頭','Love for You','','現代|愛情|成長','2026','芒果TV'],
+  ['冰湖重生','','','古裝|復仇|愛情','2026','愛奇藝'],
+  ['這一秒過火','','','民國|愛情|復仇','2026','騰訊'],
+  ['百花殺','','','古裝|權謀|宮鬥','2026','騰訊'],
+  ['九門','','','民國|懸疑|探案','2026','優酷'],
+  ['蒼蘭訣','Love Between Fairy and Devil','','仙俠|愛情|仙戀','2023','Youku'],
+  ['墨雨雲間','The Double','','古裝|復仇|爽劇','2024','Youku'],
+  ['慶餘年','Joy of Life','','古裝|權謀|爽劇','2019','騰訊'],
+  ['狂飆','The Knockout','','犯罪|年代|權謀','2023','愛奇藝'],
+  ['長相思','Lost You Forever','','古裝|仙俠|愛情','2023','騰訊'],
+  ['與鳳行','Legend of Shen Li','','古裝|仙俠|愛情','2024','騰訊'],
+  ['藏海傳','','','古裝|諜戰|權謀','2025','優酷'],
+  ['繁花','Blossoms Shanghai','','年代|商戰|愛情','2023','Youku'],
+  ['三十而已','Nothing Gold Can Stay','','都市|女性|現實','2020','Youku'],
+  ['甄嬛傳','Empresses in the Palace','','古裝|宮鬥|權謀','2011','LeTV'],
+  ['瑯琊榜','Nirvana in Fire','','古裝|權謀|復仇','2015','Youku'],
+  ['花千骨','The Journey of Flower','','仙俠|愛情|虐戀','2015','Youku'],
+  ['知否知否','The Story of Ming Lan','','古裝|家庭|宅鬥','2018','Netflix'],
+  ['三體','Three-Body','','科幻|懸疑|歷史','2023','Tencent']
+];
+const mk = ([zh,en,ko,g,y,p], ty) => ({zh,en,ko,g:g.split('|'),y:+y,p,ty});
+const DB = [...RAW_KR.map(r => mk(r,'kr')), ...RAW_CN.map(r => mk(r,'cn'))];
+
+// ── 進階詞（不分韓劇陸劇，全部一起給）────────────────────
+const MODS = [['名場面',1],['結局',1],['反轉',0],['高能片段',0],['演技',0],['OST',0],['reaction 追劇中',0],['第 1 集',0],['花絮',0],['預告',0]];
+const noSpoil = () => (state.hit && state.hit.ty === 'cn') ? '无剧透' : '무스포';
+
+const state = {mods:new Set(), safe:false, autoAlias:false, hit:null, recent:[]};
+let mods = MODS;
+
+// ── 最近搜過 ─────────────────────────────────────────────
+const load = () => { try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch { return {}; } };
+const save = () => localStorage.setItem(LS, JSON.stringify({recent: state.recent}));
+function remember(t, alias) {
+  state.recent = [{t, a:alias, ms:Date.now()}, ...state.recent.filter(x => x.t !== t)].slice(0, MAXREC);
+  save(); renderRecent();
+}
+function renderRecent() {
+  const box = $('#recent'); box.innerHTML = '';
+  $('#recentN').textContent = state.recent.length;
+  $('#recentCard').hidden = false;
+  if (!state.recent.length) {
+    box.innerHTML = '<span class="mute" style="font-size:13px">還沒有紀錄。打過的劇名會出現在這裡（最多 8 筆，存在你自己的瀏覽器裡）。</span>';
+    return;
+  }
+  for (const r of state.recent) {
+    const s = document.createElement('span'); s.className = 'r';
+    s.innerHTML = `<b></b><i title="移除">×</i>`;
+    s.querySelector('b').textContent = r.t;
+    s.title = r.a || '';
+    s.onclick = ev => { if (ev.target.tagName === 'I') return; applyTitle(r.t, r.a); };
+    s.querySelector('i').onclick = ev => { ev.stopPropagation(); state.recent = state.recent.filter(x => x !== r); save(); renderRecent(); };
+    box.appendChild(s);
+  }
+  const clr = document.createElement('button');
+  clr.className = 'chip'; clr.style.fontSize = '12px'; clr.textContent = '清除紀錄';
+  clr.onclick = () => { state.recent = []; save(); renderRecent(); };
+  box.appendChild(clr);
+}
+
+// ── 字典比對 ─────────────────────────────────────────────
+const norm = s => String(s || '').toLowerCase().replace(/[\s·・:：,，.。'"()（）《》\-_\/]/g, '');
+function matchDB(raw) {
+  const q = norm(raw);
+  if (q.length < 1) return null;
+  let best = null, bs = 0;
+  for (const d of DB) {
+    const zh = norm(d.zh);
+    let s = 0;
+    if (zh === q) s = 100;
+    else if (q.length >= 2 && (zh.includes(q) || q.includes(zh))) s = 70 + Math.min(zh.length, q.length);
+    else if (d.en && norm(d.en) === q) s = 95;
+    else if (d.en && d.en.length > 3 && norm(d.en).includes(q)) s = 60;
+    else if (d.ko && norm(d.ko) === q) s = 95;
+    else if (d.ko && d.ko.length > 1 && norm(d.ko).includes(q)) s = 55;
+    if (s > bs) { bs = s; best = d; }
+  }
+  return bs >= 55 ? best : null;
+}
+function suggest(raw) {
+  const q = norm(raw);
+  if (q.length < 1) return [];
+  return DB.filter(d => norm(d.zh).includes(q) || (d.en && norm(d.en).includes(q)) || (d.ko && norm(d.ko).includes(q)))
+    .sort((a, b) => (b.y - a.y) || a.zh.length - b.zh.length).slice(0, 7);
+}
+
+// ── 關鍵字 ───────────────────────────────────────────────
+function query() {
+  const t = $('#title').value.trim();
+  if (!t) return null;
+  const zh = state.hit ? state.hit.zh : t;
+  const parts = [zh];
+  for (const w of state.mods) parts.push(w);
+  if (state.safe) parts.push(noSpoil());
+  const alias = $('#alias').value.trim();
+  const en = alias || (state.hit && state.hit.en) || '';
+  const ko = state.hit && state.hit.ko ? state.hit.ko : '';
+  const base = parts.filter(Boolean).join(' ');
+  return {t, zh, base, en, ko, hy: state.hit ? state.hit.en : (en || zh)};
+}
+
+// ── 各平台連結 ───────────────────────────────────────────
+const slug = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+const G = (t, host) => `https://www.google.com/search?q=${e(t)}+site%3A${host}`;
+function sourcesFor(q) {
+  const {zh, base, en, ko, hy} = q;
+  const igTag = slug(en || hy);
+  const list = [
+    {id:'th', name:'Threads', dot:'var(--th)', note:'海外韓劇討論主戰場，粉絲最會剪片段',
+     btns:[
+      ['關鍵字搜尋', `https://www.threads.com/search?q=${e(base)}`],
+      ['標籤串', `https://www.threads.com/search?q=${e(zh)}&serp_type=tags`],
+      ['用英文名', en ? ['英文名搜尋', `https://www.threads.com/search?q=${e(en)}`] : null],
+      ['限定本站', G(base, 'threads.net')]
+     ].filter(Boolean)},
+    {id:'dy', name:'抖音', dot:'var(--dy)', note:'華語劇片段最多，綜合／影片分頁直接點',
+     btns:[
+      ['綜合', `https://www.douyin.com/search/${e(base)}?type=general`],
+      ['影片', `https://www.douyin.com/search/${e(base)}?type=video`],
+      ['找官方帳號', `https://www.douyin.com/search/${e(base)}?type=user`],
+      ['限定本站', G(base, 'douyin.com')]
+     ]},
+    {id:'ig', name:'Instagram', dot:'var(--ig)', note:'官方帳號與 Reels 短片最齊',
+     btns:[
+      ['關鍵字搜尋', `https://www.instagram.com/explore/search/keyword/?q=${e(base)}`],
+      igTag ? ['標籤頁', `https://www.instagram.com/explore/tags/${igTag}/`] : null,
+      en ? ['用英文名', `https://www.instagram.com/explore/search/keyword/?q=${e(en)}`] : null,
+      ['限定本站', G(base, 'instagram.com')]
+     ].filter(Boolean)},
+    {id:'yt', name:'YouTube', dot:'var(--yt)', note:'官方預告、官方頻道剪輯片段',
+     btns:[
+      ['搜尋片段', `https://www.youtube.com/results?search_query=${e(base)}`],
+      ['只看本週', `https://www.youtube.com/results?search_query=${e(base)}&sp=CAISAhAB`],
+      en ? ['官方頻道', `https://www.youtube.com/results?search_query=${e(en + ' official')}&sp=EgIQAg%253D%253D`] : null,
+      ['限定本站', G(base, 'youtube.com')]
+     ].filter(Boolean)}
+  ];
+  return list;
+}
+function renderSources() {
+  const q = query(), box = $('#sources');
+  if (!q) { $('#srcCard').hidden = true; return; }
+  $('#srcCard').hidden = false;
+  $('#srcWho').textContent = `（${q.zh}）`;
+  box.innerHTML = '';
+  for (const s of sourcesFor(q)) {
+    const d = document.createElement('div'); d.className = 'src';
+    d.innerHTML = `<h3><span class="dot" style="background:${s.dot}"></span>${s.name}</h3><div class="mute">${s.note}</div><div class="btns"></div>`;
+    const b = d.querySelector('.btns');
+    for (const [label, url] of s.btns) {
+      const a = document.createElement('a');
+      a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+      a.innerHTML = `<span></span><span class="ar">↗</span>`;
+      a.querySelector('span').textContent = label;
+      a.title = url;
+      a.onclick = () => remember(q.zh, q.en);       // 點連結順便記成「最近搜過」
+      b.appendChild(a);
+    }
+    box.appendChild(d);
+  }
+}
+
+// ── 相關劇推薦 ───────────────────────────────────────────
+function related(hit) {
+  if (!hit) return [];
+  const scored = DB.filter(d => d !== hit).map(d => {
+    const shared = d.g.filter(x => hit.g.includes(x));
+    let s = shared.length * 3;
+    if (d.p && d.p === hit.p) s += 1.5;
+    if (d.ty === hit.ty) s += 2;                       // 同國別的先推
+    if (d.y >= 2024) s += 1.5;
+    s -= Math.abs(d.y - hit.y) * 0.25;
+    if (d.en) s += 0.8;                                 // 有英文名的，IG／YouTube 查得到東西
+    return {d, s, shared};
+  }).filter(x => x.s >= 3).sort((a, b) => b.s - a.s).slice(0, 3);
+  return scored.map(x => {
+    const why = [];
+    if (x.shared.length) why.push('同樣是 ' + x.shared.join('＋'));
+    if (x.d.ty === hit.ty) why.push(x.d.ty === 'kr' ? '也是韓劇' : '也是陸劇');
+    if (x.d.p && x.d.p === hit.p) why.push('同在 ' + x.d.p);
+    if (x.d.y >= 2025) why.push(x.d.y + ' 年的');
+    return {d: x.d, why: why.slice(0, 2).join('　·　') || '近期熱門'};
+  });
+}
+function renderRel() {
+  const box = $('#rel'), list = state.hit ? related(state.hit) : [];
+  $('#relCard').hidden = !list.length;
+  box.innerHTML = '';
+  for (const {d, why} of list) {
+    const a = document.createElement('a');
+    a.href = '#';
+    a.innerHTML = `<div class="t"></div><div class="e"></div><div class="w"></div>`;
+    a.querySelector('.t').textContent = d.zh;
+    a.querySelector('.e').textContent = [d.en || d.ko, d.y + (d.p ? '　' + d.p : '')].filter(Boolean).join('　·　');
+    a.querySelector('.w').textContent = why + '　→';
+    a.onclick = ev => { ev.preventDefault(); applyTitle(d.zh, d.en); };
+    box.appendChild(a);
+  }
+}
+
+// ── 套用一部劇 ───────────────────────────────────────────
+function applyTitle(t, alias, keepWik) {
+  const hit = matchDB(t);
+  state.hit = hit;
+  state.safe = false; $('#safeChip').setAttribute('aria-pressed', 'false');
+  renderChips();
+  $('#title').value = hit ? hit.zh : t;
+  $('#alias').value = alias || (hit && hit.en) || '';
+  state.autoAlias = !alias && !!(hit && hit.en);
+  clearTimeout(wikiTimer);
+  if (!keepWik) { WIK.token++; WIK.items = []; WIK.picked = null; $('#wikCard').hidden = true; }
+  hideSug();
+  refresh();
+  remember($('#title').value.trim(), $('#alias').value.trim());
+}
+
+// ── 建議下拉 ─────────────────────────────────────────────
+let sugIdx = -1, sugList = [];
+function hideSug() { $('#sug').hidden = true; sugIdx = -1; sugList = []; }
+function showSug(list) {
+  const box = $('#sug');
+  sugList = list; sugIdx = -1;
+  if (!list.length) return hideSug();
+  box.innerHTML = ''; box.hidden = false;
+  for (const d of list) {
+    const b = document.createElement('button');
+    b.innerHTML = '<span class="nm"></span><span class="en"></span><span class="yy"></span>';
+    b.querySelector('.nm').textContent = d.zh;
+    b.querySelector('.en').textContent = d.en || d.ko || '';
+    b.querySelector('.yy').textContent = d.y;
+    b.onmousedown = ev => { ev.preventDefault(); applyTitle(d.zh, d.en); };
+    box.appendChild(b);
+  }
+}
+$('#title').addEventListener('input', () => {
+  const v = $('#title').value;
+  const prevEn = state.hit ? (state.hit.en || '') : '';
+  state.hit = matchDB(v);
+  const newEn = state.hit ? (state.hit.en || '') : '';
+  if (state.autoAlias) {
+    // 別名是工具自己填的 → 跟著命中結果換掉；沒有命中就清空，
+    // 否則上一部戲的英文名會黏在輸入框裡，被錯送到 IG／YouTube
+    $('#alias').value = newEn;
+    state.autoAlias = !!newEn;
+  } else if (newEn && newEn !== prevEn) {
+    $('#alias').value = newEn;          // 剛命中一部戲，順手補上英文名
+    state.autoAlias = true;
+  }
+  showSug(suggest(v));
+  refresh();
+  maybeWiki(v);
+});
+// 只有在「字典裡認不出來」時才去問維基百科——避免打劇名時多打一堆無用的請求
+let wikiTimer = null;
+function maybeWiki(v) {
+  clearTimeout(wikiTimer);
+  const t = v.trim();
+  if (!t || state.hit) {
+    WIK.token++; WIK.items = []; WIK.picked = null;
+    $('#wikCard').hidden = true; $('#wikBox').innerHTML = '';
+    return;
+  }
+  if (t.length < 2) { $('#wikCard').hidden = true; return; }
+  wikiTimer = setTimeout(() => runWiki(t), 750);      // 停頓一下才查，不要每敲一個字就打
+}
+$('#title').addEventListener('keydown', ev => {
+  if (ev.key === 'Escape') return hideSug();
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    if ($('#sug').hidden || !sugList.length) return;
+    ev.preventDefault();
+    const bs = [...$('#sug').children];
+    sugIdx = (sugIdx + (ev.key === 'ArrowDown' ? 1 : -1) + bs.length) % bs.length;
+    bs.forEach((b, i) => b.classList.toggle('on', i === sugIdx));
+    bs[sugIdx].scrollIntoView({block:'nearest'});
+    return;
+  }
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    if (sugIdx >= 0 && sugList[sugIdx]) { const d = sugList[sugIdx]; applyTitle(d.zh, d.en); return; }
+    const t = $('#title').value.trim();
+    if (t) {
+      hideSug();
+      remember($('#title').value.trim(), $('#alias').value.trim());
+      if (!state.hit) runWiki(t);      // 字典沒有 → 立刻查，不用等 debounce
+    }
+  }
+});
+$('#title').addEventListener('blur', () => setTimeout(hideSug, 120));
+$('#title').addEventListener('focus', () => { const v = $('#title').value.trim(); if (v) showSug(suggest(v)); });
+$('#alias').addEventListener('input', () => { state.autoAlias = false; refresh(); });
+
+// ── 進階詞 ───────────────────────────────────────────────
+function renderChips() {
+  const box = $('#chips'); box.innerHTML = '';
+  for (const [w] of mods) {
+    const b = document.createElement('button');
+    b.className = 'chip'; b.textContent = w;
+    b.setAttribute('aria-pressed', state.mods.has(w));
+    b.onclick = () => { state.mods.has(w) ? state.mods.delete(w) : state.mods.add(w); renderChips(); refresh(); };
+    box.appendChild(b);
+  }
+}
+$('#safeChip').onclick = () => { state.safe = !state.safe; $('#safeChip').setAttribute('aria-pressed', state.safe); refresh(); };
+
+// ── 命中卡 / 關鍵字預覽 ──────────────────────────────────
+function renderHit() {
+  const box = $('#hitBox'); box.innerHTML = '';
+  const h = state.hit;
+  if (!h) return;
+  const auto = state.autoAlias ? '　<b style="color:var(--ok)">已自動套用英文名</b>' : '';
+  box.innerHTML = `<div class="hit">
+    <span class="t"></span>
+    <span class="tag"></span>
+    <span class="k">英文 <b></b></span>
+    <span class="k">韓文 <b></b></span>
+    <span class="k">類型 <b></b></span>
+    <span class="k">年份 <b></b></span>
+    <span class="k">片源 <b></b></span>
+  </div>`;
+  box.querySelector('.t').textContent = h.zh + '　' + auto;
+  box.querySelector('.tag').textContent = h.ty === 'cn' ? '陸劇' : '韓劇';
+  const kv = box.querySelectorAll('.k b');
+  kv[0].textContent = h.en || '—';
+  kv[1].textContent = h.ko || '—';
+  kv[2].textContent = h.g.join(' · ');
+  kv[3].textContent = h.y;
+  kv[4].textContent = h.p || '—';
+}
+function renderPrev() {
+  const q = query(), p = $('#qprev');
+  if (!q) { p.textContent = '打一個劇名，這裡會顯示即將送出去的關鍵字。'; return; }
+  const parts = [`主關鍵字：<b>${q.base}</b>`];
+  if (q.en) parts.push(`IG／YouTube 用：<b>${q.en}</b>`);
+  if (q.ko) parts.push(`韓文：<b>${q.ko}</b>`);
+  p.innerHTML = parts.join('　｜　');
+}
+
+// ── 維基百科：查「這個人演過什麼」─────────────────────────
+// 資料來自 Wikidata 公開 API（CORS 開放、免金鑰），只抓「電視連續劇」類型，
+// 避免把電影、品牌 MV 混進來。查不到就安靜不動，不影響原有流程。
+const WIK = {
+  qid: null, name: '', desc: '', url: '',
+  items: [], picked: new Set(), loading: false, token: 0,
+  endpoint: 'https://zh.wikipedia.org/w/api.php',
+  sparql: 'https://query.wikidata.org/sparql'
+};
+// 找人的步驟：先在中文維基搜，英文／羅馬拼音名字再補搜英文維基（中文維基認不得
+// "Lee Young-ae" 這種寫法）。兩邊都拿到條目，再取對應的 Wikidata 編號。
+// 註：wd 的 wbsearchentities 在瀏覽器裡結果不穩（常回空），所以走 wikipedia 的 REST 搜尋。
+const WIK_SITES = [
+  {rest: 'https://zh.wikipedia.org/w/rest.php/v1/search/title', api: 'https://zh.wikipedia.org/w/api.php'},
+  {rest: 'https://en.wikipedia.org/w/rest.php/v1/search/title', api: 'https://en.wikipedia.org/w/api.php'}
+];
+async function wikiCandidates(term) {
+  const seen = new Set(), out = [];
+  for (const site of WIK_SITES) {
+    let r;
+    try { r = await (await fetch(`${site.rest}?q=${e(term)}&limit=5`)).json(); }
+    catch { continue; }
+    const pages = (r.pages || []).slice(0, 4);
+    if (!pages.length) continue;
+    const titles = pages.map(x => x.title).filter(Boolean);
+    const desc = {};
+    for (const x of pages) desc[x.title] = x.description || '';
+    let j;
+    try {
+      j = await (await fetch(
+        `${site.api}?action=query&prop=pageprops&ppprop=wikibase_item&titles=${e(titles.join('|'))}&redirects=1&format=json&origin=*`
+      )).json();
+    } catch { continue; }
+    for (const k in (j.query || {}).redirects || []) {
+      const rr = j.query.redirects[k];
+      if (desc[rr.to] === undefined) desc[rr.to] = desc[rr.from] || '';
+    }
+    for (const k in (j.query || {}).pages || {}) {
+      const pg = j.query.pages[k];
+      const qid = pg.pageprops && pg.pageprops.wikibase_item;
+      if (qid && !seen.has(qid)) { seen.add(qid); out.push({id: qid, label: pg.title, description: desc[pg.title] || ''}); }
+    }
+    if (!out.length) continue;     // 這個語言的站沒查到 → 換另一個語言的站
+  }
+  // 名單順序不一定準（"李英愛" 也會搜出李英健），把條目名跟輸入最像的排前面。
+  // 羅馬拼音對不上中文條目名，所以羅馬拼音時以「描述欄有演員字樣」當主要線索。
+  const q = norm(term);
+  const latin = /^[\x20-\x7e]+$/.test(term) && /[a-zA-Z]{2}/.test(term);
+  out.sort((a, b) => relScore(q, b, latin) - relScore(q, a, latin));
+  return out;
+}
+function relScore(q, cand, latin) {
+  const l = norm(cand.label);
+  let s = 0;
+  if (l === q) s = 100;
+  else if (l.startsWith(q)) s = 80 - l.length;
+  else if (l.includes(q)) s = 60 - l.length;
+  if (latin) {
+    if (/演員|歌手|藝人|男星|女星/.test(cand.description || '')) s += 50;
+    if (/\(/.test(cand.label || '')) s -= 5;                 // 「金秀賢 (作家)」這種先排後
+  }
+  return s;
+}
+// 先確認這個人是「人類」，並且真的演過電視劇，再回傳片單
+async function wikiPerson(qid) {
+  const q = `SELECT ?human ?work WHERE {
+    VALUES ?e { wd:${qid} }
+    OPTIONAL { ?e wdt:P31 wd:Q5 . BIND(true AS ?human) }
+    OPTIONAL { ?e wdt:P31 ?w . VALUES ?w { wd:Q5398426 wd:Q15416 wd:Q506240 wd:Q29168811 wd:Q11578774 wd:Q17537576 } BIND(true AS ?work) }
+  }`;
+  const j = await (await fetch(`${WIK.sparql}?format=json&origin=*&query=${e(q)}`)).json();
+  const b = j.results.bindings[0] || {};
+  return {human: !!b.human, work: !!b.work};
+}
+async function wikiCredits(qid) {
+  const q = `SELECT ?f ?zh ?en ?date WHERE {
+    ?f wdt:P161 wd:${qid} ; wdt:P31 ?type .
+    VALUES ?type { wd:Q5398426 wd:Q15416 wd:Q506240 wd:Q29168811 wd:Q11578774 wd:Q17537576 }
+    OPTIONAL { ?f wdt:P577 ?date . }
+    OPTIONAL { ?f rdfs:label ?zh . FILTER(lang(?zh) = "zh") }
+    OPTIONAL { ?f rdfs:label ?t . FILTER(lang(?t) = "zh-hant") }
+    OPTIONAL { ?f rdfs:label ?en . FILTER(lang(?en) = "en") }
+  }`;
+  const j = await (await fetch(`${WIK.sparql}?format=json&origin=*&query=${e(q)}`)).json();
+  // 同一齣戲會有多種語言標籤 → 以 Q 編號去重，中文優先
+  const map = new Map();
+  for (const b of j.results.bindings) {
+    const id = b.f.value.split('/').pop();
+    const cur = map.get(id) || {id, zh: '', tw: '', en: '', date: ''};
+    if (b.zh) cur.zh = cur.zh || b.zh.value;
+    if (b.t) cur.tw = cur.tw || b.t.value;
+    if (b.en) cur.en = cur.en || b.en.value;
+    if (b.date) cur.date = cur.date || b.date.value.slice(0, 4);
+    map.set(id, cur);
+  }
+  const clean = s => String(s || '').split(/[，,（(]/)[0].replace(/\s+/g, ' ').trim();
+  const items = [...map.values()].map(x => ({
+    qid: x.id,
+    zh: clean(x.tw || x.zh) || clean(x.en),
+    en: x.en, y: x.date
+  })).filter(x => x.zh && x.zh.length > 1);
+  // 字典裡有的優先排前面（那些可以自動帶英文名、也查得到片段）
+  for (const it of items) it.known = !!matchDB(it.zh) || !!(it.en && matchDB(it.en));
+  items.sort((a, b) => (b.known - a.known) || (b.y || 0) - (a.y || 0) || a.zh.length - b.zh.length);
+  return items;
+}
+function wikURL(qid) { return `https://zh.wikipedia.org/wiki/Special:EntityPage/${qid}`; }
+
+async function runWiki(term) {
+  const token = ++WIK.token;
+  const card = $('#wikCard'), box = $('#wikBox');
+  WIK.loading = true;
+  card.hidden = false;
+  box.innerHTML = '<span class="mute" style="font-size:13px">正在問維基百科這個人演過什麼…</span>';
+  try {
+    const cands = await wikiCandidates(term);
+    if (token !== WIK.token) return;
+    if (!cands.length) { WIK.loading = false; WIK.items = []; renderWik(); return; }
+    // 依序找第一個「是人、而且有電視劇作品」的候選
+    let pick = null, credits = [];
+    for (const c of cands) {
+      if (token !== WIK.token) return;
+      const id = String(c.id).split('/').pop();
+      if (!/^Q\d+$/.test(id)) continue;           // 跳過歧義頁之類不是 Q 編號的結果
+      const chk = await wikiPerson(id);
+      if (!chk.human) continue;
+      const list = await wikiCredits(id);
+      if (list.length) { pick = {id, ...c}; credits = list; break; }
+    }
+    if (token !== WIK.token) return;
+    WIK.loading = false;
+    if (!pick) { WIK.loading = false; WIK.items = []; renderWik(); return; }
+    WIK.qid = pick.id; WIK.name = pick.label; WIK.desc = pick.description || '';
+    WIK.url = wikURL(pick.id); WIK.items = credits;
+    WIK.picked = null;                              // 不預設選，避免顯示上像選了但其實沒套用
+    renderWik();
+  } catch (err) {
+    if (token !== WIK.token) return;
+    WIK.loading = false;
+    card.hidden = false;                     // 別裝沒事：查不到要讓使用者知道
+    box.innerHTML = '<span class="mute" style="font-size:13px">維基百科查不到（可能需要網路，或這個人沒有條目）。你還是可以直接用上面的關鍵字搜尋。</span>';
+  }
+}
+function renderWik() {
+  const card = $('#wikCard'), box = $('#wikBox');
+  if (!WIK.items.length) { card.hidden = true; box.innerHTML = ''; return; }
+  card.hidden = false;
+  $('#wikWho').textContent = `（${WIK.name}${WIK.desc ? '　' + WIK.desc : ''}）`;
+  box.innerHTML = '';
+  const row = document.createElement('div'); row.className = 'wik';
+  for (const it of WIK.items) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.setAttribute('aria-pressed', WIK.picked === it.qid);
+    if (WIK.picked === it.qid) b.classList.add('on');
+    b.title = '點一下：把這部戲設成主搜尋（維基百科的收視員工資料）';
+    b.innerHTML = '<b></b> <i></i>';
+    b.querySelector('b').textContent = it.zh;
+    b.querySelector('i').textContent = [it.en, it.y].filter(Boolean).join('　');
+    b.onclick = () => {
+      // 選一部戲 → 主搜尋換成它；維基百科有的英文名一併帶上（字典沒收的劇靠這個查 IG／YouTube）
+      WIK.picked = it.qid;
+      applyTitle(it.zh, it.en || '', true);
+      renderWik();
+    };
+    row.appendChild(b);
+  }
+  box.appendChild(row);
+  const note = document.createElement('div'); note.className = 'wikNote';
+  const a = document.createElement('a');
+  a.href = WIK.url; a.target = '_blank'; a.rel = 'noopener';
+  a.textContent = `維基百科條目：${WIK.name} ↗`;
+  const person = document.createElement('button');
+  person.className = 'chip';
+  person.style.fontSize = '12px';
+  person.textContent = '只想搜演員本人 →';
+  person.title = `不選劇，直接用「${WIK.name} 片段」之類的關鍵字搜四個來源`;
+  person.onclick = () => {
+    $('#title').value = WIK.name;
+    state.hit = null; state.autoAlias = false;
+    $('#alias').value = '';
+    WIK.picked = null;
+    renderChips(); renderHit(); renderSources(); renderPrev(); renderRel();
+    renderWik();                       // 讓晶片的高亮也跟著取消，不然看起來還選著某部戲
+  };
+  const tip = document.createElement('span');
+  tip.className = 'mute';
+  tip.textContent = '點一部戲＝把它設成主搜尋。這份片單來自維基百科，只留在這個頁面上。';
+  note.appendChild(a); note.appendChild(person); note.appendChild(tip);
+  box.appendChild(note);
+}
+
+// ── 動作 ─────────────────────────────────────────────────
+const toast = t => { const n = $('#toast'); n.textContent = t; n.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(() => n.classList.remove('on'), 1900); };
+async function copy(t) { try { await navigator.clipboard.writeText(t); toast('已複製：' + t); } catch { prompt('複製這段文字：', t); } }
+$('#copyQ').onclick = () => { const q = query(); q ? copy(q.base) : toast('先打一個劇名'); };
+$('#openAll').onclick = () => {
+  const q = query(); if (!q) return toast('先打一個劇名');
+  const urls = sourcesFor(q).flatMap(s => s.btns.filter(([l]) => !l.startsWith('限定')).map(([, u]) => u));
+  let blocked = 0;
+  for (const u of urls) if (!window.open(u, '_blank', 'noopener')) blocked++;
+  if (blocked) $('#allNote').hidden = false;
+  toast(blocked ? `被擋下 ${blocked} 個，請允許開啟多個分頁` : `已開 ${urls.length} 個分頁`);
+};
+$('#themeBtn').onclick = () => {
+  const now = document.documentElement.getAttribute('data-theme');
+  const next = now === 'dark' ? 'light' : now === 'light' ? '' : 'dark';
+  if (next) document.documentElement.setAttribute('data-theme', next); else document.documentElement.removeAttribute('data-theme');
+  localStorage.setItem('dramaRadar.theme', next);
+};
+const th = localStorage.getItem('dramaRadar.theme');
+if (th) document.documentElement.setAttribute('data-theme', th);
+
+function refresh() { renderPrev(); renderHit(); renderSources(); renderRel(); }
+
+const d0 = load();
+state.recent = Array.isArray(d0.recent) ? d0.recent.slice(0, MAXREC) : [];
+mods = MODS;
+state.mods = new Set(MODS.filter(([, on]) => on).map(([w]) => w));
+renderChips(); renderRecent(); refresh();
+</script>
+</body>
+</html>
